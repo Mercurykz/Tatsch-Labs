@@ -78,49 +78,90 @@ export default function Dashboard({ onSelectPatient }) {
       ) : (
         <div className="patient-grid">
           {patients.map(patient => (
-            <div key={patient.id} className="card patient-card cursor-pointer" onClick={() => onSelectPatient(patient)}>
-              <div className="patient-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div
+              key={patient.id}
+              className="card patient-card cursor-pointer"
+              onClick={() => onSelectPatient(patient)}
+              style={{
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                border: '1px solid var(--border-color)',
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary-color)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.2)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+              }}
+            >
+              <div className="patient-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                  <div className="avatar" style={{ background: 'var(--primary-glow)' }}>{patient.avatar}</div>
+                  <div className="avatar" style={{ background: 'var(--primary-glow)', width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 'bold' }}>{patient.avatar}</div>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', color: '#fff' }}>{patient.name}</h3>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{patient.age} anos • Nível: {patient.rewards?.level || 'Iniciante'}</span>
+                    <h3 style={{ fontSize: '1.1rem', color: '#fff', margin: '0 0 0.25rem 0' }}>{patient.name}</h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{patient.age} anos • {patient.rewards?.level || 'Iniciante'}</span>
                   </div>
                 </div>
                 {patient.healthScore > 0 && (
-                  <div style={{ background: 'rgba(255,255,255,0.05)', padding: '0.3rem 0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                  <div style={{ background: 'rgba(16, 185, 129, 0.15)', padding: '0.5rem 0.75rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                     <Star size={14} color="#fbbf24" fill={patient.healthScore >= 80 ? "#fbbf24" : "none"} />
                     <span style={{ color: '#fff', fontWeight: 'bold' }}>{patient.healthScore}</span>
                   </div>
                 )}
               </div>
 
-              <div className="patient-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Peso</span>
-                  <span className="stat-value">{patient.metrics.weight} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>kg</span></span>
+              <div className="patient-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ padding: '0.75rem', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Peso</span>
+                  <span style={{ display: 'block', color: '#fff', fontSize: '1.25rem', fontWeight: 'bold' }}>{patient.metrics.weight || 0} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>kg</span></span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">Gordura Corporal</span>
-                  <span className="stat-value text-accent">{patient.metrics.bodyFat} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>%</span></span>
+                <div style={{ padding: '0.75rem', background: 'rgba(251, 146, 60, 0.08)', borderRadius: '8px', border: '1px solid rgba(251, 146, 60, 0.2)' }}>
+                  <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gordura</span>
+                  <span style={{ display: 'block', color: '#fbbf24', fontSize: '1.25rem', fontWeight: 'bold' }}>{patient.metrics.bodyFat || 0} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>%</span></span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">Massa Muscular</span>
-                  <span className="stat-value text-primary">{patient.metrics.muscleMass} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>kg</span></span>
+                <div style={{ padding: '0.75rem', background: 'rgba(34, 197, 94, 0.08)', borderRadius: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                  <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Músculo</span>
+                  <span style={{ display: 'block', color: '#10b981', fontSize: '1.25rem', fontWeight: 'bold' }}>{patient.metrics.muscleMass || 0} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>kg</span></span>
                 </div>
-                <div className="stat-item">
-                  <span className="stat-label">Idade Metabólica</span>
-                  <span className="stat-value">{patient.metrics.metabolicAge}</span>
+                <div style={{ padding: '0.75rem', background: 'rgba(100, 200, 255, 0.08)', borderRadius: '8px', border: '1px solid rgba(100, 200, 255, 0.2)' }}>
+                  <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Idade Met.</span>
+                  <span style={{ display: 'block', color: '#64c8ff', fontSize: '1.25rem', fontWeight: 'bold' }}>{patient.metrics.metabolicAge || 0}</span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-                <span className={`badge ${patient.status === 'Normal' || patient.status === 'Excelente' ? 'badge-success' : 'badge-warning'}`}>
+              <div className="flex justify-between items-center" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  backgroundColor: patient.status === 'Excelente' ? 'rgba(34, 197, 94, 0.2)' : patient.status === 'Normal' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                  color: patient.status === 'Excelente' ? '#22c55e' : patient.status === 'Normal' ? '#3b82f6' : '#f59e0b',
+                  border: patient.status === 'Excelente' ? '1px solid rgba(34, 197, 94, 0.5)' : patient.status === 'Normal' ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid rgba(245, 158, 11, 0.5)',
+                }}>
                   <Activity size={14} />
                   {patient.status}
                 </span>
-                <button className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.875rem' }}>
-                  Ver Ficha <ChevronRight size={16} />
+                <button style={{
+                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.875rem',
+                  background: 'var(--primary-color)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.2s ease',
+                }}>
+                  Ver Ficha
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Edit, Pill, Activity, Droplets, Flame, Bone, HeartPulse, Apple, Moon, Award, Syringe, Watch, Calendar, Trophy, Zap, TrendingUp, Star, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EditPatientModal from './EditPatientModal';
@@ -7,6 +7,10 @@ export default function PatientProfile({ patient, onBack }) {
   const [activeTab, setActiveTab] = useState('geral');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentPatient, setCurrentPatient] = useState(patient);
+
+  useEffect(() => {
+    setCurrentPatient(patient);
+  }, [patient]);
 
   if (!currentPatient) return null;
 
@@ -45,23 +49,40 @@ export default function PatientProfile({ patient, onBack }) {
       <div className="page-header" style={{ marginBottom: '1.5rem' }}>
         <div className="flex items-center gap-4">
           <div className="avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: 'var(--primary-glow)' }}>{currentPatient.avatar}</div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div className="flex items-center gap-3">
-              <h1 style={{ fontSize: '2rem', color: '#fff', marginBottom: '0.25rem' }}>{currentPatient.name}</h1>
+              <h1 style={{ fontSize: '2rem', color: '#fff', marginBottom: '0.25rem', margin: 0 }}>{currentPatient.name}</h1>
               {currentPatient.healthScore >= 80 && <span title="Asclépio Score Alto" style={{ color: '#fbbf24' }}><Star size={24} fill="#fbbf24" /></span>}
             </div>
-            <p style={{ color: 'var(--text-muted)' }}>{currentPatient.age} anos • Score: {currentPatient.healthScore}/100 • Nível: {currentPatient.rewards?.level}</p>
+            <p style={{ color: 'var(--text-muted)', margin: '0.25rem 0 0.5rem 0' }}>{currentPatient.age} anos • Nível: {currentPatient.rewards?.level || 'Iniciante'}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ flex: 1, maxWidth: '300px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Asclépio Score</span>
+                  <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem' }}>{currentPatient.healthScore || 0}/100</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  <div style={{
+                    width: `${Math.min(currentPatient.healthScore || 0, 100)}%`,
+                    height: '100%',
+                    background: currentPatient.healthScore >= 80 ? 'linear-gradient(90deg, #10b981, #34d399)' : currentPatient.healthScore >= 60 ? 'linear-gradient(90deg, #3b82f6, #60a5fa)' : 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+              </div>
+              {currentPatient.healthScore >= 80 && <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '0.35rem 0.7rem', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.4)', fontWeight: '600' }}>Excelente</span>}
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
           <button
             onClick={() => setIsEditModalOpen(true)}
             className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', fontWeight: '600' }}
           >
             <Edit size={18} /> Editar Ficha
           </button>
-          <button className="btn btn-secondary">
+          <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', fontWeight: '600' }}>
             <Download size={18} /> Exportar
           </button>
         </div>
@@ -102,12 +123,12 @@ export default function PatientProfile({ patient, onBack }) {
                   <Activity className="text-primary" size={20} /> Indicadores Atuais (Fitdays)
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-                  <StatItem icon={<Activity size={16} />} label="IMC" value={patient.metrics.bmi} />
-                  <StatItem icon={<Flame size={16} className="text-accent" />} label="Gordura" value={`${patient.metrics.bodyFat}%`} color="text-accent" />
-                  <StatItem icon={<HeartPulse size={16} className="text-primary" />} label="Músculo" value={`${patient.metrics.muscleMass} kg`} color="text-primary" />
-                  <StatItem icon={<Droplets size={16} className="text-accent" />} label="Água" value={`${patient.metrics.water}%`} />
-                  <StatItem icon={<Bone size={16} style={{ color: '#fbbf24' }} />} label="Massa Óssea" value={`${patient.metrics.boneMass} kg`} />
-                  <StatItem icon={<Activity size={16} style={{ color: '#f43f5e' }} />} label="Metabolismo" value={`${patient.metrics.bmr} kcal`} />
+                  <StatItem icon={<Activity size={16} />} label="IMC" value={currentPatient.metrics?.bmi || 'N/A'} />
+                  <StatItem icon={<Flame size={16} className="text-accent" />} label="Gordura" value={`${currentPatient.metrics?.bodyFat || 'N/A'}${typeof currentPatient.metrics?.bodyFat === 'number' ? '%' : ''}`} color="text-accent" />
+                  <StatItem icon={<HeartPulse size={16} className="text-primary" />} label="Músculo" value={`${currentPatient.metrics?.muscleMass || 'N/A'}${typeof currentPatient.metrics?.muscleMass === 'number' ? ' kg' : ''}`} color="text-primary" />
+                  <StatItem icon={<Droplets size={16} className="text-accent" />} label="Água" value={`${currentPatient.metrics?.water || 'N/A'}${typeof currentPatient.metrics?.water === 'number' ? '%' : ''}`} />
+                  <StatItem icon={<Bone size={16} style={{ color: '#fbbf24' }} />} label="Massa Óssea" value={`${currentPatient.metrics?.boneMass || 'N/A'}${typeof currentPatient.metrics?.boneMass === 'number' ? ' kg' : ''}`} />
+                  <StatItem icon={<Activity size={16} style={{ color: '#f43f5e' }} />} label="Metabolismo" value={`${currentPatient.metrics?.bmr || 'N/A'}${typeof currentPatient.metrics?.bmr === 'number' ? ' kcal' : ''}`} />
                 </div>
               </div>
               <div className="card glass-panel">
