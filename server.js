@@ -214,7 +214,7 @@ app.put('/api/patients/:id', async (req, res) => {
   }
 
   const { id } = req.params;
-  const { name, age, avatar, status, healthScore, metrics, exams } = req.body;
+  const { name, age, avatar, status, healthScore, metrics, exams, history } = req.body;
 
   if (!name || !age) {
     return res.status(400).json({ error: 'Name and age are required' });
@@ -237,6 +237,7 @@ app.put('/api/patients/:id', async (req, res) => {
       healthScore: healthScore !== undefined ? healthScore : existingPatient.healthScore,
       metrics: metrics || existingPatient.metrics,
       exams: exams !== undefined ? exams : existingPatient.exams,
+      history: history !== undefined ? history : existingPatient.history,
       updated_at: new Date().toISOString(),
     };
 

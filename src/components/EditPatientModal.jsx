@@ -52,12 +52,33 @@ export default function EditPatientModal({ patient, isOpen, onClose, onPatientUp
     }
 
     try {
+      // Build updated history: append a new point if weight/bodyFat/muscleMass changed
+      const existingHistory = patient.history || [];
+      const metricsChanged =
+        formData.metrics.weight !== (patient.metrics?.weight || 0) ||
+        formData.metrics.bodyFat !== (patient.metrics?.bodyFat || 0) ||
+        formData.metrics.muscleMass !== (patient.metrics?.muscleMass || 0);
+
+      let updatedHistory = existingHistory;
+      if (metricsChanged && (formData.metrics.weight || formData.metrics.bodyFat || formData.metrics.muscleMass)) {
+        const newPoint = {
+          date: new Date().toISOString(),
+          weight: formData.metrics.weight || 0,
+          bodyFat: formData.metrics.bodyFat || 0,
+          muscleMass: formData.metrics.muscleMass || 0,
+        };
+        updatedHistory = [...existingHistory, newPoint].slice(-50); // keep last 50 entries
+      }
+
       const response = await fetch(`/api/patients/${patient.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          history: updatedHistory,
+        }),
       });
 
       if (!response.ok) {
