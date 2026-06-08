@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UploadCloud, FileText, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 
-export default function UploadSection({ onUploadComplete }) {
+export default function UploadSection({ onUploadComplete, patient }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState(false);
