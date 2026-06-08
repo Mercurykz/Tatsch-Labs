@@ -1,10 +1,48 @@
-import React, { useState } from 'react';
-import { UploadCloud, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { UploadCloud, FileText, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 
 export default function UploadSection({ onUploadComplete }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const fileInputRef = useRef(null);
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFile = async (file) => {
+    if (!file) return;
+
+    setErrorMessage('');
+    setIsUploading(true);
+    setSuccess(false);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || 'Falha ao enviar o arquivo.');
+      }
+
+      await response.json();
+      setSuccess(true);
+      if (onUploadComplete) onUploadComplete();
+    } catch (error) {
+      console.error('Erro de upload:', error);
+      setErrorMessage(error.message || 'Falha no upload. Tente novamente.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -15,22 +53,17 @@ export default function UploadSection({ onUploadComplete }) {
     setIsDragging(false);
   };
 
-  const simulateUpload = () => {
-    setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        if (onUploadComplete) onUploadComplete();
-      }, 2000);
-    }, 1500);
-  };
-
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     setIsDragging(false);
-    simulateUpload();
+    const file = e.dataTransfer.files?.[0];
+    await handleFile(file);
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    await handleFile(file);
+    e.target.value = '';
   };
 
   return (
@@ -41,13 +74,22 @@ export default function UploadSection({ onUploadComplete }) {
       </div>
 
       <div className="card glass-panel">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,application/pdf"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
         {!isUploading && !success ? (
-          <div 
+          <div
             className={`upload-area ${isDragging ? 'dragover' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={simulateUpload}
+            onClick={openFileDialog}
+            style={{ cursor: 'pointer' }}
           >
             <div className="upload-icon">
               <UploadCloud size={32} />
@@ -58,12 +100,17 @@ export default function UploadSection({ onUploadComplete }) {
               <span className="badge badge-success"><FileText size={14} /> CSV</span>
               <span className="badge badge-warning"><FileText size={14} /> PDF</span>
             </div>
+            {errorMessage && (
+              <div className="upload-error" style={{ marginTop: '1rem', color: '#f87171', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <XCircle size={16} /> {errorMessage}
+              </div>
+            )}
           </div>
         ) : isUploading ? (
           <div className="upload-area" style={{ borderStyle: 'solid', borderColor: 'var(--primary-color)' }}>
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '4px solid rgba(16, 185, 129, 0.2)', borderTopColor: 'var(--primary-color)', animation: 'spin 1s linear infinite', marginBottom: '1rem' }}></div>
-            <h3 style={{ fontSize: '1.25rem', color: '#fff' }}>Processando e analisando dados com IA...</h3>
-            <p style={{ color: 'var(--text-muted)' }}>Extraindo métricas, calculando evoluções e definindo protocolo de vitaminas.</p>
+            <h3 style={{ fontSize: '1.25rem', color: '#fff' }}>Enviando o arquivo para o servidor...</h3>
+            <p style={{ color: 'var(--text-muted)' }}>Aguarde enquanto os dados são salvos no PostgreSQL.</p>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
@@ -71,8 +118,8 @@ export default function UploadSection({ onUploadComplete }) {
             <div className="upload-icon" style={{ background: 'var(--primary-color)', color: '#fff' }}>
               <CheckCircle size={32} />
             </div>
-            <h3 style={{ fontSize: '1.25rem', color: '#fff' }}>Dados Processados com Sucesso!</h3>
-            <p style={{ color: 'var(--text-muted)' }}>O perfil do paciente foi atualizado e a prescrição de vitaminas foi gerada.</p>
+            <h3 style={{ fontSize: '1.25rem', color: '#fff' }}>Upload realizado com sucesso!</h3>
+            <p style={{ color: 'var(--text-muted)' }}>O arquivo foi enviado para o banco e pode ser usado para criar um novo paciente.</p>
           </div>
         )}
       </div>

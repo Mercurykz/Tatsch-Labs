@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight, Activity, Star } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
 
 export default function Dashboard({ onSelectPatient }) {
   const [patients, setPatients] = useState([]);
@@ -12,47 +11,13 @@ export default function Dashboard({ onSelectPatient }) {
 
   const fetchPatients = async () => {
     try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select(`
-          *,
-          patient_metrics (*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro do Supabase:', error);
-        throw error;
+      const response = await fetch('/api/patients');
+      if (!response.ok) {
+        throw new Error('Falha ao buscar pacientes');
       }
 
-      const formattedPatients = data.map(p => {
-        // Pega as métricas mais recentes, se houver
-        const latestMetrics = p.patient_metrics && p.patient_metrics.length > 0 
-          ? p.patient_metrics.sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-          : { weight: '--', body_fat: '--', muscle_mass: '--', metabolic_age: '--' };
-
-        return {
-          id: p.id,
-          name: p.name,
-          age: p.age,
-          avatar: p.avatar,
-          status: p.status,
-          healthScore: p.health_score,
-          lastUpdate: p.updated_at,
-          rewards: {
-            level: p.rewards_level,
-            points: p.rewards_points
-          },
-          metrics: {
-            weight: latestMetrics.weight,
-            bodyFat: latestMetrics.body_fat,
-            muscleMass: latestMetrics.muscle_mass,
-            metabolicAge: latestMetrics.metabolic_age
-          }
-        };
-      });
-
-      setPatients(formattedPatients);
+      const data = await response.json();
+      setPatients(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao buscar pacientes:', error);
     } finally {
@@ -77,11 +42,11 @@ export default function Dashboard({ onSelectPatient }) {
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-          <Activity className="animate-spin" style={{ marginRight: '1rem' }} /> Carregando pacientes do Supabase...
+          <Activity className="animate-spin" style={{ marginRight: '1rem' }} /> Carregando pacientes...
         </div>
       ) : patients.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
-          Nenhum paciente cadastrado ainda. (Lembre-se de rodar o código SQL no Supabase!)
+          Nenhum paciente cadastrado ainda. Envie uma ficha para começar.
         </div>
       ) : (
         <div className="patient-grid">
