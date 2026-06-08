@@ -49,7 +49,8 @@ const initDatabase = async () => {
 
   await pool.query(`
     ALTER TABLE uploads
-    ADD COLUMN IF NOT EXISTS patient_id TEXT;
+    ADD COLUMN IF NOT EXISTS patient_id TEXT,
+    ADD COLUMN IF NOT EXISTS content BYTEA;
   `);
 
   const { rows } = await pool.query('SELECT count(*)::int AS count FROM patients');
