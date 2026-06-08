@@ -121,6 +121,64 @@ app.get('/api/patients', async (req, res) => {
   }
 });
 
+app.post('/api/patients', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({ error: 'Database not configured' });
+  }
+
+  const { name, age, avatar, status, healthScore } = req.body;
+
+  if (!name || !age || !avatar) {
+    return res.status(400).json({ error: 'Name, age, and avatar are required' });
+  }
+
+  const newPatient = {
+    id: randomUUID(),
+    name,
+    age: parseInt(age, 10),
+    avatar,
+    status: status || 'Normal',
+    healthScore: healthScore || 0,
+    updated_at: new Date().toISOString(),
+    rewards_level: 'Iniciante',
+    rewards_points: 0,
+    metrics: {
+      weight: 0,
+      bodyFat: 0,
+      muscleMass: 0,
+      metabolicAge: 0,
+      bmi: 0,
+      water: 0,
+      boneMass: 0,
+      bmr: 0,
+    },
+    history: [],
+    exams: [],
+    nutrition: {
+      dailyCalories: 0,
+      qualityScore: 0,
+      macros: {
+        carbs: { value: 0, percentage: 0 },
+        protein: { value: 0, percentage: 0 },
+        fat: { value: 0, percentage: 0 },
+      },
+    },
+    lifestyle: {
+      sleep: { device: '', quality: '', averageHours: 0 },
+      activity: { device: '', averageSteps: 0, activeMinutes: 0 },
+    },
+    medications: [],
+  };
+
+  try {
+    await pool.query('INSERT INTO patients(id, data) VALUES($1, $2)', [newPatient.id, newPatient]);
+    return res.status(201).json(newPatient);
+  } catch (error) {
+    console.error('Error creating patient:', error);
+    return res.status(500).json({ error: 'Unable to create patient' });
+  }
+});
+
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });

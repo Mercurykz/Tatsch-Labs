@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, Activity, Star } from 'lucide-react';
+import { Search, ChevronRight, Activity, Star, Plus } from 'lucide-react';
+import AddPatientModal from './AddPatientModal';
 
 export default function Dashboard({ onSelectPatient }) {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchPatients();
@@ -25,6 +27,10 @@ export default function Dashboard({ onSelectPatient }) {
     }
   };
 
+  const handlePatientAdded = (newPatient) => {
+    setPatients([newPatient, ...patients]);
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -32,13 +38,34 @@ export default function Dashboard({ onSelectPatient }) {
           <h1>Meus Pacientes</h1>
           <p>Visão geral de todos os pacientes monitorados ({patients.length})</p>
         </div>
-        <div className="search-box">
+        <div className="search-box" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input type="text" placeholder="Buscar paciente..." style={{ paddingLeft: '2.5rem', width: '250px' }} />
           </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: 'var(--primary-color)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <Plus size={18} /> Novo Paciente
+          </button>
         </div>
       </div>
+
+      <AddPatientModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onPatientAdded={handlePatientAdded} />
 
       {loading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
