@@ -3,6 +3,7 @@ import { ArrowLeft, Download, Edit, Pill, Activity, Droplets, Flame, Bone, Heart
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import EditPatientModal from './EditPatientModal';
 import ConfirmModal from './ConfirmModal';
+import TreatmentModal from './TreatmentModal';
 
 export default function PatientProfile({ patient, onBack }) {
   const [activeTab, setActiveTab] = useState('geral');
@@ -28,6 +29,8 @@ export default function PatientProfile({ patient, onBack }) {
   const [editMode, setEditMode] = useState(false);
   const [editExamData, setEditExamData] = useState(null);
   const [editOriginalDate, setEditOriginalDate] = useState(null);
+  const [isTreatmentModalOpen, setIsTreatmentModalOpen] = useState(false);
+  const [editingMed, setEditingMed] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [examToDelete, setExamToDelete] = useState(null);
   const [isDeletingExam, setIsDeletingExam] = useState(false);
@@ -923,58 +926,125 @@ export default function PatientProfile({ patient, onBack }) {
         )}
 
         {activeTab === 'tratamento' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
-            <div className="card glass-panel">
-              <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Shield className="text-danger" size={20} /> Medicamentos Contínuos
-              </h3>
-              {currentPatient.medications && currentPatient.medications.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {currentPatient.medications.map((med, idx) => (
-                    <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
-                      <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1.1rem' }}>{med.name}</div>
-                      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Syringe size={14} />{med.dose}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={14} />{med.frequency}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0', background: 'rgba(0,0,0,0.1)', borderRadius: '8px' }}>
-                  Nenhum medicamento registrado.
-                </div>
-              )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1000px', margin: '0 auto' }}>
+
+            {/* Header com botão */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Shield size={20} style={{ color: '#ef4444' }} /> Tratamento Médico
+                </h3>
+                <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Medicamentos contínuos e protocolo de suplementação.</p>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => { setEditingMed(null); setIsTreatmentModalOpen(true); }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem' }}
+              >
+                <Pill size={16} /> Adicionar Tratamento
+              </button>
             </div>
 
-            <div className="card glass-panel">
-              <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Pill className="text-primary" size={20} /> Protocolo de Suplementação
-              </h3>
-              <div className="vitamin-list">
-                {currentPatient.vitamins && currentPatient.vitamins.length > 0 ? currentPatient.vitamins.map((vit, idx) => (
-                  <div key={idx} className="vitamin-item">
-                    <div className="vitamin-icon"><Pill size={20} /></div>
-                    <div style={{ flex: 1 }}>
-                      <div className="flex justify-between items-center" style={{ marginBottom: '0.25rem' }}>
-                        <h4 style={{ color: '#fff', margin: 0 }}>{vit.name}</h4>
-                        <span className={`badge ${vit.priority === 'High' ? 'badge-danger' : vit.priority === 'Medium' ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.7rem' }}>
-                          {vit.priority === 'High' ? 'Alta' : vit.priority === 'Medium' ? 'Média' : 'Baixa'}
-                        </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+              {/* Medicamentos */}
+              <div className="card glass-panel">
+                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Shield size={20} style={{ color: '#ef4444' }} /> Medicamentos Contínuos
+                </h3>
+                {currentPatient.medications && currentPatient.medications.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {currentPatient.medications.map((med, idx) => (
+                      <div key={idx} style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '10px', borderLeft: '4px solid #ef4444', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem' }}>{med.name}</div>
+                          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Syringe size={13} />{med.dose}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={13} />{med.frequency}</span>
+                          </div>
+                          {med.notes && <div style={{ marginTop: '0.4rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>{med.notes}</div>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.4rem', marginLeft: '0.75rem' }}>
+                          <button
+                            onClick={() => { setEditingMed({ ...med, _idx: idx }); setIsTreatmentModalOpen(true); }}
+                            className="btn btn-secondary"
+                            style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                          >Editar</button>
+                          <button
+                            onClick={async () => {
+                              const updated = [...(currentPatient.medications || [])];
+                              updated.splice(idx, 1);
+                              const res = await fetch(`/api/patients/${currentPatient.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ medications: updated }),
+                              });
+                              if (res.ok) setCurrentPatient((p) => ({ ...p, medications: updated }));
+                            }}
+                            className="btn btn-danger"
+                            style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                          >Excluir</button>
+                        </div>
                       </div>
-                      <div style={{ color: 'var(--primary-color)', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-                        Dose: {vit.dose}
-                      </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{vit.reason}</p>
-                    </div>
+                    ))}
                   </div>
-                )) : (
-                  <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>Nenhuma vitamina prescrita.</div>
+                ) : (
+                  <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2.5rem 1rem', background: 'rgba(0,0,0,0.1)', borderRadius: '10px', border: '1px dashed rgba(255,255,255,0.08)' }}>
+                    Nenhum medicamento registrado.<br />
+                    <span style={{ fontSize: '0.85rem' }}>Clique em "Adicionar Medicamento" para começar.</span>
+                  </div>
                 )}
+              </div>
+
+              {/* Suplementação */}
+              <div className="card glass-panel">
+                <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Pill className="text-primary" size={20} /> Protocolo de Suplementação
+                </h3>
+                <div className="vitamin-list">
+                  {currentPatient.vitamins && currentPatient.vitamins.length > 0 ? currentPatient.vitamins.map((vit, idx) => (
+                    <div key={idx} className="vitamin-item">
+                      <div className="vitamin-icon"><Pill size={20} /></div>
+                      <div style={{ flex: 1 }}>
+                        <div className="flex justify-between items-center" style={{ marginBottom: '0.25rem' }}>
+                          <h4 style={{ color: '#fff', margin: 0 }}>{vit.name}</h4>
+                          <span className={`badge ${vit.priority === 'High' ? 'badge-danger' : vit.priority === 'Medium' ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.7rem' }}>
+                            {vit.priority === 'High' ? 'Alta' : vit.priority === 'Medium' ? 'Média' : 'Baixa'}
+                          </span>
+                        </div>
+                        <div style={{ color: 'var(--primary-color)', fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.25rem' }}>Dose: {vit.dose}</div>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>{vit.reason}</p>
+                      </div>
+                    </div>
+                  )) : (
+                    <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>Nenhuma vitamina prescrita.</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Modal de Tratamento */}
+        <TreatmentModal
+          isOpen={isTreatmentModalOpen}
+          onClose={() => { setIsTreatmentModalOpen(false); setEditingMed(null); }}
+          editingMed={editingMed}
+          onSave={async (form) => {
+            const medications = [...(currentPatient.medications || [])];
+            if (editingMed && typeof editingMed._idx === 'number') {
+              medications[editingMed._idx] = { name: form.name, dose: form.dose, frequency: form.frequency, notes: form.notes };
+            } else {
+              medications.push({ name: form.name, dose: form.dose, frequency: form.frequency, notes: form.notes });
+            }
+            const res = await fetch(`/api/patients/${currentPatient.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ medications }),
+            });
+            if (!res.ok) throw new Error('Erro ao salvar');
+            setCurrentPatient((p) => ({ ...p, medications }));
+          }}
+        />
 
         {activeTab === 'documentos' && (
           <div className="card glass-panel" style={{ maxWidth: '1000px', margin: '0 auto' }}>
