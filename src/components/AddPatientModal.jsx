@@ -9,6 +9,8 @@ export default function AddPatientModal({ isOpen, onClose, onPatientAdded }) {
     status: 'Normal',
     healthScore: 0,
   });
+  const [addExam, setAddExam] = useState(false);
+  const [initialExam, setInitialExam] = useState({ date: '', b12: '', cortisol: '', ferritin: '', fastingGlucose: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,12 +34,25 @@ export default function AddPatientModal({ isOpen, onClose, onPatientAdded }) {
     }
 
     try {
+      const payload = { ...formData };
+      if (addExam && initialExam.date) {
+        payload.exams = [
+          {
+            date: initialExam.date,
+            b12: { value: parseFloat(initialExam.b12) || 0, unit: 'pg/mL', status: 'N/A' },
+            cortisol: { value: parseFloat(initialExam.cortisol) || 0, unit: 'mcg/dL', status: 'N/A' },
+            ferritin: { value: parseFloat(initialExam.ferritin) || 0, unit: 'ng/mL', status: 'N/A' },
+            fastingGlucose: { value: parseFloat(initialExam.fastingGlucose) || 0, unit: 'mg/dL', status: 'N/A' },
+          },
+        ];
+      }
+
       const response = await fetch('/api/patients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -47,6 +62,8 @@ export default function AddPatientModal({ isOpen, onClose, onPatientAdded }) {
 
       const newPatient = await response.json();
       setFormData({ name: '', age: '', avatar: '', status: 'Normal', healthScore: 0 });
+      setAddExam(false);
+      setInitialExam({ date: '', b12: '', cortisol: '', ferritin: '', fastingGlucose: '' });
       if (onPatientAdded) onPatientAdded(newPatient);
       onClose();
     } catch (err) {
@@ -170,6 +187,25 @@ export default function AddPatientModal({ isOpen, onClose, onPatientAdded }) {
               />
             </div>
           </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={addExam} onChange={(e) => setAddExam(e.target.checked)} />
+              <span>Adicionar exame inicial (opcional)</span>
+            </label>
+          </div>
+
+          {addExam && (
+            <div style={{ marginBottom: '1.5rem', padding: '1rem', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <input type="date" name="date" value={initialExam.date} onChange={(e) => setInitialExam({ ...initialExam, date: e.target.value })} style={{ padding: '0.6rem', borderRadius: '8px' }} />
+                <input type="number" name="b12" placeholder="B12 (pg/mL)" value={initialExam.b12} onChange={(e) => setInitialExam({ ...initialExam, b12: e.target.value })} style={{ padding: '0.6rem', borderRadius: '8px' }} />
+                <input type="number" name="cortisol" placeholder="Cortisol (mcg/dL)" value={initialExam.cortisol} onChange={(e) => setInitialExam({ ...initialExam, cortisol: e.target.value })} style={{ padding: '0.6rem', borderRadius: '8px' }} />
+                <input type="number" name="ferritin" placeholder="Ferritina (ng/mL)" value={initialExam.ferritin} onChange={(e) => setInitialExam({ ...initialExam, ferritin: e.target.value })} style={{ padding: '0.6rem', borderRadius: '8px' }} />
+                <input type="number" name="fastingGlucose" placeholder="Glicemia Jejum (mg/dL)" value={initialExam.fastingGlucose} onChange={(e) => setInitialExam({ ...initialExam, fastingGlucose: e.target.value })} style={{ padding: '0.6rem', borderRadius: '8px' }} />
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>

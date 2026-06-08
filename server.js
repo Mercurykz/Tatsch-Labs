@@ -42,8 +42,14 @@ const initDatabase = async () => {
       size BIGINT,
       mime_type TEXT,
       content BYTEA,
+      patient_id TEXT,
       created_at TIMESTAMPTZ DEFAULT now()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE uploads
+    ADD COLUMN IF NOT EXISTS patient_id TEXT;
   `);
 
   const { rows } = await pool.query('SELECT count(*)::int AS count FROM patients');
@@ -107,6 +113,25 @@ const initDatabase = async () => {
 app.use(express.json());
 app.use(express.static(join(__dirname, 'dist')));
 
+const isValidNumber = (v) => typeof v === 'number' && Number.isFinite(v);
+
+const validateExamItem = (item) => {
+  if (!item || typeof item !== 'object') return false;
+  if (!item.date) return false;
+  const keys = ['b12', 'cortisol', 'ferritin', 'fastingGlucose'];
+  for (const k of keys) {
+    const val = item[k];
+    if (!val || typeof val !== 'object') return false;
+    if (!isValidNumber(val.value)) return false;
+  }
+  return true;
+};
+
+const validateExamsArray = (arr) => {
+  if (!Array.isArray(arr)) return false;
+  return arr.every(validateExamItem);
+};
+
 app.get('/api/patients', async (req, res) => {
   if (!pool) {
     return res.status(500).json({ error: 'Database not configured' });
@@ -126,10 +151,14 @@ app.post('/api/patients', async (req, res) => {
     return res.status(500).json({ error: 'Database not configured' });
   }
 
-  const { name, age, avatar, status, healthScore } = req.body;
+  const { name, age, avatar, status, healthScore, exams } = req.body;
 
   if (!name || !age || !avatar) {
     return res.status(400).json({ error: 'Name, age, and avatar are required' });
+  }
+
+  if (exams !== undefined && !validateExamsArray(exams)) {
+    return res.status(400).json({ error: 'Invalid exams format' });
   }
 
   const newPatient = {
@@ -153,7 +182,7 @@ app.post('/api/patients', async (req, res) => {
       bmr: 0,
     },
     history: [],
-    exams: [],
+    exams: exams || [],
     nutrition: {
       dailyCalories: 0,
       qualityScore: 0,
@@ -185,7 +214,7 @@ app.put('/api/patients/:id', async (req, res) => {
   }
 
   const { id } = req.params;
-  const { name, age, avatar, status, healthScore, metrics } = req.body;
+  const { name, age, avatar, status, healthScore, metrics, exams } = req.body;
 
   if (!name || !age) {
     return res.status(400).json({ error: 'Name and age are required' });
@@ -203,9 +232,11 @@ app.put('/api/patients/:id', async (req, res) => {
       ...existingPatient,
       name,
       age: parseInt(age, 10),
+      avatar: avatar || existingPatient.avatar,
       status: status || existingPatient.status,
       healthScore: healthScore !== undefined ? healthScore : existingPatient.healthScore,
       metrics: metrics || existingPatient.metrics,
+      exams: exams !== undefined ? exams : existingPatient.exams,
       updated_at: new Date().toISOString(),
     };
 
@@ -228,19 +259,68 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 
   const { originalname, mimetype, size, buffer } = req.file;
+  const patientId = req.body.patientId || null;
   const id = randomUUID();
   const path = `${id}_${originalname}`;
 
   try {
+    if (patientId) {
+      const patientResult = await pool.query('SELECT id FROM patients WHERE id = $1', [patientId]);
+      if (patientResult.rows.length === 0) {
+        return res.status(400).json({ error: 'Paciente não encontrado para upload' });
+      }
+    }
+
     await pool.query(
-      'INSERT INTO uploads(id, filename, path, size, mime_type, content) VALUES($1, $2, $3, $4, $5, $6)',
-      [id, originalname, path, size, mimetype, buffer]
+      'INSERT INTO uploads(id, filename, path, size, mime_type, content, patient_id) VALUES($1, $2, $3, $4, $5, $6, $7)',
+      [id, originalname, path, size, mimetype, buffer, patientId]
     );
 
-    return res.json({ success: true, id, filename: originalname, path });
+    return res.json({ success: true, id, filename: originalname, path, patientId });
   } catch (error) {
     console.error('Error saving upload:', error);
     return res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+app.get('/api/patients/:id/uploads', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({ error: 'Database not configured' });
+  }
+
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT id, filename, size, mime_type, created_at FROM uploads WHERE patient_id = $1 ORDER BY created_at DESC',
+      [id]
+    );
+    return res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching patient uploads:', error);
+    return res.status(500).json({ error: 'Unable to fetch patient uploads' });
+  }
+});
+
+app.get('/api/uploads/:id', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({ error: 'Database not configured' });
+  }
+
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT filename, mime_type, content FROM uploads WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Upload not found' });
+    }
+
+    const upload = result.rows[0];
+    res.setHeader('Content-Type', upload.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${upload.filename}"`);
+    return res.send(upload.content);
+  } catch (error) {
+    console.error('Error downloading upload:', error);
+    return res.status(500).json({ error: 'Unable to download upload' });
   }
 });
 

@@ -38,7 +38,7 @@ function App() {
         )}
         
         {currentView === 'upload' && (
-          <UploadSection onUploadComplete={handleUploadComplete} />
+          <UploadSection patient={selectedPatient} onUploadComplete={handleUploadComplete} />
         )}
       </main>
     </div>
