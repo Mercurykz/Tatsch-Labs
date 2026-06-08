@@ -15,6 +15,20 @@ app.use(express.static(join(__dirname, 'dist')));
 app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
+// Health check endpoint for Platform (Railway) to verify app is responsive
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
+// Log environment for debugging
+console.log('Starting server', { PORT: port, NODE_ENV: process.env.NODE_ENV });
+
+// Global error handlers to ensure errors appear in logs
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException', err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandledRejection', reason);
+});
 
 // Deixar o Express decidir automaticamente a melhor interface de rede (IPv4 ou IPv6) do Railway
 app.listen(port, () => {
