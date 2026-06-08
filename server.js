@@ -12,7 +12,7 @@ const port = process.env.PORT || 8080;
 app.use(express.static(join(__dirname, 'dist')));
 
 // Lidar com rotas no Frontend (React Router)
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
