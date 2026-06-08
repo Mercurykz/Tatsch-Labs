@@ -1,8 +1,0 @@
-"devDependencies": {
-  "rimraf": "^5.0.0",
-  ...
-},
-"scripts": {
-  "preinstall": "rimraf node_modules/.vite",
-  ...
-}
