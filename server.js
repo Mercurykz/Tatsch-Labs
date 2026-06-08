@@ -179,6 +179,45 @@ app.post('/api/patients', async (req, res) => {
   }
 });
 
+app.put('/api/patients/:id', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({ error: 'Database not configured' });
+  }
+
+  const { id } = req.params;
+  const { name, age, avatar, status, healthScore, metrics } = req.body;
+
+  if (!name || !age) {
+    return res.status(400).json({ error: 'Name and age are required' });
+  }
+
+  try {
+    const result = await pool.query('SELECT data FROM patients WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    const existingPatient = result.rows[0].data;
+    const updatedPatient = {
+      ...existingPatient,
+      name,
+      age: parseInt(age, 10),
+      status: status || existingPatient.status,
+      healthScore: healthScore !== undefined ? healthScore : existingPatient.healthScore,
+      metrics: metrics || existingPatient.metrics,
+      updated_at: new Date().toISOString(),
+    };
+
+    await pool.query('UPDATE patients SET data = $1 WHERE id = $2', [updatedPatient, id]);
+
+    return res.json(updatedPatient);
+  } catch (error) {
+    console.error('Error updating patient:', error);
+    return res.status(500).json({ error: 'Unable to update patient' });
+  }
+});
+
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });

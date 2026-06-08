@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, Pill, Activity, Droplets, Flame, Bone, HeartPulse, Apple, Moon, Award, Syringe, Watch, Calendar, Trophy, Zap, TrendingUp, Star, Shield } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Pill, Activity, Droplets, Flame, Bone, HeartPulse, Apple, Moon, Award, Syringe, Watch, Calendar, Trophy, Zap, TrendingUp, Star, Shield } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import EditPatientModal from './EditPatientModal';
 
 export default function PatientProfile({ patient, onBack }) {
   const [activeTab, setActiveTab] = useState('geral');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentPatient, setCurrentPatient] = useState(patient);
 
-  if (!patient) return null;
+  if (!currentPatient) return null;
+
+  const handlePatientUpdated = (updatedPatient) => {
+    setCurrentPatient(updatedPatient);
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -37,21 +44,35 @@ export default function PatientProfile({ patient, onBack }) {
 
       <div className="page-header" style={{ marginBottom: '1.5rem' }}>
         <div className="flex items-center gap-4">
-          <div className="avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: 'var(--primary-glow)' }}>{patient.avatar}</div>
+          <div className="avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', background: 'var(--primary-glow)' }}>{currentPatient.avatar}</div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 style={{ fontSize: '2rem', color: '#fff', marginBottom: '0.25rem' }}>{patient.name}</h1>
-              {patient.healthScore >= 80 && <span title="Asclépio Score Alto" style={{ color: '#fbbf24' }}><Star size={24} fill="#fbbf24" /></span>}
+              <h1 style={{ fontSize: '2rem', color: '#fff', marginBottom: '0.25rem' }}>{currentPatient.name}</h1>
+              {currentPatient.healthScore >= 80 && <span title="Asclépio Score Alto" style={{ color: '#fbbf24' }}><Star size={24} fill="#fbbf24" /></span>}
             </div>
-            <p style={{ color: 'var(--text-muted)' }}>{patient.age} anos • Score: {patient.healthScore}/100 • Nível: {patient.rewards?.level}</p>
+            <p style={{ color: 'var(--text-muted)' }}>{currentPatient.age} anos • Score: {currentPatient.healthScore}/100 • Nível: {currentPatient.rewards?.level}</p>
           </div>
         </div>
-        <div>
-          <button className="btn btn-primary">
-            <Download size={18} /> Gerar Relatório
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Edit size={18} /> Editar Ficha
+          </button>
+          <button className="btn btn-secondary">
+            <Download size={18} /> Exportar
           </button>
         </div>
       </div>
+
+      <EditPatientModal
+        patient={currentPatient}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onPatientUpdated={handlePatientUpdated}
+      />
 
       {/* Navegação por Abas */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
