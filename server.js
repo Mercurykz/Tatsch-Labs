@@ -214,11 +214,7 @@ app.put('/api/patients/:id', async (req, res) => {
   }
 
   const { id } = req.params;
-  const { name, age, avatar, status, healthScore, metrics, exams, history } = req.body;
-
-  if (!name || !age) {
-    return res.status(400).json({ error: 'Name and age are required' });
-  }
+  const updates = req.body;
 
   try {
     const result = await pool.query('SELECT data FROM patients WHERE id = $1', [id]);
@@ -230,16 +226,13 @@ app.put('/api/patients/:id', async (req, res) => {
     const existingPatient = result.rows[0].data;
     const updatedPatient = {
       ...existingPatient,
-      name,
-      age: parseInt(age, 10),
-      avatar: avatar || existingPatient.avatar,
-      status: status || existingPatient.status,
-      healthScore: healthScore !== undefined ? healthScore : existingPatient.healthScore,
-      metrics: metrics || existingPatient.metrics,
-      exams: exams !== undefined ? exams : existingPatient.exams,
-      history: history !== undefined ? history : existingPatient.history,
+      ...updates,
       updated_at: new Date().toISOString(),
     };
+    
+    if (updates.age !== undefined) {
+      updatedPatient.age = parseInt(updates.age, 10);
+    }
 
     await pool.query('UPDATE patients SET data = $1 WHERE id = $2', [updatedPatient, id]);
 
