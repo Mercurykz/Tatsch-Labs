@@ -16,7 +16,7 @@ app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
-// Forçar o express a bindar no host '0.0.0.0' usando a PORT do Railway
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Express server running natively on 0.0.0.0:${port}`);
+// Deixar o Express decidir automaticamente a melhor interface de rede (IPv4 ou IPv6) do Railway
+app.listen(port, () => {
+  console.log(`Express server running on port ${port}`);
 });
